@@ -7,6 +7,7 @@ from random import random
 from time import time
 import socket
 from functools import wraps
+from tornado import iostream
 
 try:
     from itertools import imap
@@ -32,6 +33,7 @@ class DogStatsd(object):
         self._host = None
         self._port = None
         self.socket = None
+        self.stream = None
         self.max_buffer_size = max_buffer_size
         self._send = self._send_to_server
         self.connect(host, port)
@@ -75,6 +77,7 @@ class DogStatsd(object):
         self._port = int(port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.connect((self._host, self._port))
+        self.stream = iostream.IOStream(self.socket)
 
     def gauge(self, metric, value, tags=None, sample_rate=1):
         """
@@ -175,7 +178,7 @@ class DogStatsd(object):
 
     def _send_to_server(self, packet):
         try:
-            self.socket.send(packet.encode(self.encoding))
+            self.stream.write(packet.encode(self.encoding))
         except socket.error:
             log.exception("Error submitting metric")
 
@@ -224,7 +227,7 @@ class DogStatsd(object):
                             'event discarded' % title)
 
         try:
-            self.socket.send(string.encode(self.encoding))
+            self.stream.write(string.encode(self.encoding))
         except Exception:
             log.exception(u'Error submitting event "%s"' % title)
 
