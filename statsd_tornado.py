@@ -177,6 +177,7 @@ class DogStatsd(object):
         self._send(encoded)
 
     def _send_to_server(self, packet):
+        print "temporary print statement from the correct module!"
         try:
             self.stream.write(packet.encode(self.encoding))
         except socket.error:
