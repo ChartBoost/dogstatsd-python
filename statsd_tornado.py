@@ -177,7 +177,6 @@ class DogStatsd(object):
         self._send(encoded)
 
     def _send_to_server(self, packet):
-        print "temporary print statement from the correct module!"
         if not self.stream or self.stream.closed():
             self.connect(self._host, self._port)
         try:
