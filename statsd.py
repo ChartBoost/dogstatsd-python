@@ -179,8 +179,15 @@ class DogStatsd(object):
     def _send_to_server(self, packet):
         try:
             self.stream.write(packet.encode(self.encoding))
-        except socket.error:
-            log.exception("Error submitting metric")
+        except Exception:
+            try:
+                self._reconnect_and_retry(packet.encode(self.encoding))
+            except Exception:
+                log.exception("Error submitting metric")
+
+    def _reconnect_and_retry(self, payload):
+        self.connect(self._host, self._port)
+        self.stream.write(payload)
 
     def _send_to_buffer(self, packet):
         self.buffer.append(packet)
@@ -229,7 +236,10 @@ class DogStatsd(object):
         try:
             self.stream.write(string.encode(self.encoding))
         except Exception:
-            log.exception(u'Error submitting event "%s"' % title)
+            try:
+                self._reconnect_and_retry(string.encode(self.encoding))
+            except Exception:
+                log.exception(u'Error submitting event "%s"' % title)
 
 
 statsd = DogStatsd()
