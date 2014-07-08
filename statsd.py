@@ -177,17 +177,12 @@ class DogStatsd(object):
         self._send(encoded)
 
     def _send_to_server(self, packet):
+        if not self.stream or self.stream.closed():
+            self.connect(self._host, self._port)
         try:
             self.stream.write(packet.encode(self.encoding))
-        except Exception:
-            try:
-                self._reconnect_and_retry(packet.encode(self.encoding))
-            except Exception:
-                log.exception("Error submitting metric")
-
-    def _reconnect_and_retry(self, payload):
-        self.connect(self._host, self._port)
-        self.stream.write(payload)
+        except socket.error:
+            log.exception("Error submitting metric")
 
     def _send_to_buffer(self, packet):
         self.buffer.append(packet)
@@ -233,13 +228,12 @@ class DogStatsd(object):
             raise Exception(u'Event "%s" payload is too big (more that 8KB), '
                             'event discarded' % title)
 
+        if not self.stream or self.stream.closed():
+            self.connect(self._host, self._port)
         try:
             self.stream.write(string.encode(self.encoding))
         except Exception:
-            try:
-                self._reconnect_and_retry(string.encode(self.encoding))
-            except Exception:
-                log.exception(u'Error submitting event "%s"' % title)
+            log.exception(u'Error submitting event "%s"' % title)
 
 
 statsd = DogStatsd()
