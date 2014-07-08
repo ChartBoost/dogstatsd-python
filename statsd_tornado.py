@@ -178,6 +178,8 @@ class DogStatsd(object):
 
     def _send_to_server(self, packet):
         print "temporary print statement from the correct module!"
+        if not self.stream or self.stream.closed():
+            self.connect(self._host, self._port)
         try:
             self.stream.write(packet.encode(self.encoding))
         except socket.error:
@@ -227,6 +229,8 @@ class DogStatsd(object):
             raise Exception(u'Event "%s" payload is too big (more that 8KB), '
                             'event discarded' % title)
 
+        if not self.stream or self.stream.closed():
+            self.connect(self._host, self._port)
         try:
             self.stream.write(string.encode(self.encoding))
         except Exception:
